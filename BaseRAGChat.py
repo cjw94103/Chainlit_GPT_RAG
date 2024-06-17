@@ -22,7 +22,7 @@ embeddings = OpenAIEmbeddings(
 
 chat = ChatOpenAI(model="gpt-4o")
 
-prompt = PromptTemplate(template="""문장을 기반으로 질문에 답하세요. 
+prompt = PromptTemplate(template=""" 
 
 문장: 
 {document}
