@@ -34,9 +34,9 @@ text_splitter = SpacyTextSplitter(chunk_size=700, pipeline="ko_core_news_sm")
 
 @cl.on_chat_start
 async def on_chat_start():
-    files = None #← 파일이 선택되어 있는지 확인하는 변수
+    files = None 
 
-    while files is None: #← 파일이 선택될 때까지 반복
+    while files is None: 
         files = await cl.AskFileMessage(
             max_size_mb=100,
             max_files=4,
@@ -47,36 +47,34 @@ async def on_chat_start():
     # file = files[0]
     # print(files)
 
-    if not os.path.exists("tmp"): #← tmp 디렉터리가 존재하는지 확인
-        os.mkdir("tmp") #← 존재하지 않으면 생성
+    if not os.path.exists("tmp"): 
+        os.mkdir("tmp") 
     for file in files:
-        with open(f"tmp/{file.name}", "wb") as f: #← PDF 파일을 저장
-            f.write(file.content) #← 파일 내용을 작성
+        with open(f"tmp/{file.name}", "wb") as f: 
+            f.write(file.content) 
 
     database = Chroma( #← 데이터베이스 초기화
-        embedding_function=embeddings,
-        # 이번에는 persist_directory를 지정하지 않음으로써 데이터베이스 영속화를 하지 않음
-    )
+        embedding_function=embeddings)
 
     # documents = []
     for file in files:
-        documents = PyMuPDFLoader(f"tmp/{file.name}").load() #← 저장한 PDF 파일을 로드
-        splitted_documents = text_splitter.split_documents(documents) #← 문서를 분할
+        documents = PyMuPDFLoader(f"tmp/{file.name}").load()
+        splitted_documents = text_splitter.split_documents(documents)
         # documents.extend(document)
-        database.add_documents(splitted_documents) #← 문서를 데이터베이스에 추가
+        database.add_documents(splitted_documents)
 
-    cl.user_session.set(  #← 데이터베이스를 세션에 저장
-        "database",  #← 세션에 저장할 이름
-        database  #← 세션에 저장할 값
+    cl.user_session.set(  
+        "database",  
+        database  
     )
 
-    await cl.Message(content=f"`{file.name}` 로딩이 완료되었습니다. 질문을 입력하세요.").send() #← 불러오기 완료를 알림
+    await cl.Message(content=f"`{file.name}` 로딩이 완료되었습니다. 질문을 입력하세요.").send() 
 
 @cl.on_message
 async def on_message(input_message):
     print("입력된 메시지: " + input_message)
 
-    database = cl.user_session.get("database") #← 세션에서 데이터베이스를 가져옴
+    database = cl.user_session.get("database")
 
     documents = database.similarity_search(input_message)
 
@@ -90,6 +88,6 @@ async def on_message(input_message):
     
     result = chat([
         HumanMessage(content=prompt.format(document=documents_string,
-                                           query=system_prompt + '\n\n' + input_message)) #← input_message로 변경
+                                           query=system_prompt + '\n\n' + input_message))
     ])
     await cl.Message(content=result.content).send()
